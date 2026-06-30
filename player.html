@@ -94,7 +94,7 @@
             let tracks = [];
 
             try {
-                const proxyUrl = `/api/PW/live?batch_id=${batchId}&subject_id=${subjectId}&video_id=${videoId}&start=${startTimestamp}`;
+                const proxyUrl = `/api/player.js?batch_id=${batchId}&video_id=${videoId}`;
                 const apiResponse = await fetch(proxyUrl);
                 const streamData = await apiResponse.json();
 
