@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The DevCoderZ - Batches</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f5f6f8; font-family: sans-serif; padding-bottom: 70px; }
+        .subject_card { 
+            background: #fff; border-radius: 12px; padding: 12px; 
+            display: flex; align-items: center; gap: 10px; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #eaeaea;
+        }
+        .subject_card img { width: 50px; height: 50px; object-fit: contain; }
+        .subject-title { font-size: 14px; font-weight: 700; color: #111; line-height: 1.2; }
+        .teacher-name { font-size: 12px; color: #4f46e5; font-weight: 600; margin-top: 2px; }
+        .lecture-count { font-size: 11px; color: #666; margin-top: 2px; }
+
+        .header-brand {
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .app-footer { 
+            position: fixed; bottom: 0; left: 0; width: 100%; padding: 12px; 
+            text-align: center; font-size: 12px; font-weight: 600; 
+            color: #666; background: #fff; border-top: 1px solid #eaeaea; 
+            z-index: 999;
+        }
+        .app-footer span { color: #4f46e5; }
+    </style>
+</head>
+<body>
+
+    <div class="header-brand">The DevCoderZ</div>
+
+    <div class="max-w-md mx-auto p-4">
+        <h1 id="batchTitle" class="text-2xl font-extrabold text-indigo-600 mb-6">Loading...</h1>
+
+        <h2 class="text-md font-bold mb-3 text-slate-700">Live Classes</h2>
+        <div id="liveClassesContainer" class="flex gap-3 overflow-x-auto pb-3 mb-6"></div>
+
+        <h2 class="text-md font-bold mb-3 text-slate-700">Subjects</h2>
+        <div id="subjectsContainer" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div class="app-footer">
+        Developed by - <span>Devansh Sharma</span>
+    </div>
+
+    <script>
+        const batchId = new URLSearchParams(window.location.search).get("batch_id");
+
+        fetch(`/details.js?batch_id=${encodeURIComponent(batchId)}`)
+            .then(res => res.json())
+            .then(data => {
+                const res = data.data || data;
+                document.getElementById("batchTitle").innerText = res.name || "Batch Details";
+                renderClasses(res.liveClasses || res.live_classes || []);
+                renderSubjects(res.subjects || []);
+            })
+            .catch(err => console.error("Error:", err));
+
+        function renderClasses(classes) {
+            const container = document.getElementById("liveClassesContainer");
+            if (!classes.length) {
+                container.innerHTML = '<p class="text-slate-500 text-sm italic">No live classes available.</p>';
+            } else {
+                container.innerHTML = classes.map(live => `
+                    <div class="min-w-[220px] bg-white p-4 rounded-xl shadow-sm border border-indigo-100 flex flex-col gap-1">
+                        <div class="text-[10px] uppercase font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded w-fit">Live</div>
+                        <div class="text-xs font-bold text-slate-800 line-clamp-2">${live.topic || "Untitled Class"}</div>
+                        <div class="text-[10px] text-slate-500 mt-1">${live.subjectId?.name || "General"}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderSubjects(subjects) {
+            const container = document.getElementById("subjectsContainer");
+            container.innerHTML = subjects.map(sub => {
+                const teacher = sub.teacherIds?.map(t => `${t.firstName} ${t.lastName}`).join(", ") || "PW Faculty";
+                const img = (sub.imageId?.baseUrl) ? sub.imageId.baseUrl + sub.imageId.key : 'https://static.pw.live/react-batches/assets/svg/subjects/defaultSubject.svg';
+                return `
+                    <div class="subject_card" onclick='location.href="chapters.html?batch_id=${batchId}&subject_id=${sub._id}"'>
+                        <img src="${img}" alt="sub">
+                        <div>
+                            <div class="subject-title">${sub.subject || sub.name}</div>
+                            <div class="teacher-name">${teacher}</div>
+                            <div class="lecture-count">${sub.lectureCount || 0} Lectures</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>
