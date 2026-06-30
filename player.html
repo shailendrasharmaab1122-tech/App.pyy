@@ -1,99 +1,308 @@
 <!DOCTYPE html>
-<html lang="hi" style="user-select: none;">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DevCoderZ Player</title>
-  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.min.js"></script>
-  <style>
-    :root { --accent: #0ea5e9; }
-    body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
-    #player-container { width: 100vw; height: 100dvh; position: relative; display: flex; flex-direction: column; }
-    video { width: 100%; height: 100%; object-fit: contain; }
-
-    .branding { position: absolute; top: 15px; left: 15px; z-index: 100; pointer-events: none; }
-    .b1 { font-size: 10px; font-weight: 800; color: var(--accent); }
-    .b2 { font-size: 8px; color: #aaa; }
-
-    .controls-wrapper { position: absolute; bottom: 0; width: 100%; padding: 15px; background: linear-gradient(transparent, #000); z-index: 100; transition: opacity 0.3s; }
-    .hidden { opacity: 0; pointer-events: none; }
-
-    .time-row { display: flex; align-items: center; gap: 10px; font-size: 11px; margin-bottom: 15px; font-family: monospace; }
-    .progress-bar { flex: 1; height: 16px; display: flex; align-items: center; cursor: pointer; position: relative; }
-    .progress-track { width: 100%; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; position: relative; }
-    .progress-played { height: 6px; background: var(--accent); width: 0%; border-radius: 3px; position: absolute; top: 5px; }
-    .thumb { position: absolute; right: -6px; top: -3px; width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 0 4px #000; }
-
-    .btn-row { display: flex; gap: 20px; align-items: center; justify-content: center; }
-    .btn { cursor: pointer; font-size: 18px; color: white; min-width: 40px; text-align: center; }
-    #play::before { content: "▶"; }
-    #play.playing::before { content: "❚❚"; }
-
-    .menu { position: absolute; bottom: 80px; right: 20px; background: #1a1a1a; padding: 15px; border-radius: 10px; display: none; border: 1px solid #333; z-index: 150; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The DevCoderZ - Premium Player</title>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+        #container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .live-pill {
+            background: rgba(0, 0, 0, 0.6) !important;
+            color: #fff !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 4px !important;
+            padding: 2px 8px !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            margin-left: 10px !important;
+            cursor: pointer;
+        }
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .live-now .live-dot {
+            background-color: #ff0000;
+            box-shadow: 0 0 8px #ff0000;
+        }
+        .live-behind .live-dot {
+            background-color: #b3b3b3;
+        }
+        .plyr--fullscreen-fallback {
+            background: #000 !important;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 </head>
 <body>
-<div id="player-container">
-  <video id="video" playsinline></video>
-  <div class="branding">
-    <div class="b1">THE DEVCODERZ</div>
-    <div class="b2">Developed by Devansh Sharma</div>
-  </div>
-  <div class="controls-wrapper" id="ctrls">
-    <div class="time-row">
-      <span id="cur">00:00:00</span>
-      <div id="progressBar" class="progress-bar">
-        <div class="progress-track"><div id="progressPlayed" class="progress-played"><div class="thumb"></div></div></div>
-      </div>
-      <span id="dur" style="margin-left:5px;">00:00:00</span>
+
+    <div id="container">
+        <video id="video" crossorigin="anonymous" playsinline></video>
     </div>
-    <div class="btn-row">
-      <div class="btn" onclick="seek(-10)">⟲10</div>
-      <div class="btn" id="play" onclick="togglePlay()"></div>
-      <div class="btn" onclick="seek(10)">10⟳</div>
-      <div class="btn" onclick="toggleFS()">⛶</div>
-      <div class="btn" onclick="goToDownload()">⬇️</div>
-      <div class="btn" onclick="toggleMenu()">⚙️</div>
-    </div>
-  </div>
-  <div class="menu" id="setMenu">
-    <label style="font-size:10px; color:var(--accent)">Speed</label>
-    <select onchange="video.playbackRate = this.value"><option value="1">1x</option><option value="1.5">1.5x</option><option value="2">2x</option></select>
-  </div>
-</div>
-<script>
-  const video = document.getElementById('video'), ctrls = document.getElementById('ctrls'), menu = document.getElementById('setMenu'), playBtn = document.getElementById('play'), progressBar = document.getElementById('progressBar');
 
-  function togglePlay() { video.paused ? video.play() : video.pause(); }
-  video.addEventListener('play', () => playBtn.classList.add('playing'));
-  video.addEventListener('pause', () => playBtn.classList.remove('playing'));
+    <script>
+        (async () => {
+            const video = document.getElementById('video');
+            const container = document.getElementById('container');
 
-  function toggleFS() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
-  function toggleMenu() { menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; }
-  function seek(s) { video.currentTime += s; }
-  function goToDownload() { window.location.href = `download.html?url=${encodeURIComponent(video.currentSrc || window.location.href)}`; }
+            const urlParams = new URLSearchParams(window.location.search);
+            const batchId = urlParams.get('batch_id');
+            const subjectId = urlParams.get('subject_id');
+            const videoId = urlParams.get('video_id');
+            const startTimestamp = urlParams.get('start') || '';
 
-  document.getElementById('player-container').onclick = (e) => {
-    if(!e.target.closest('.controls-wrapper') && !e.target.closest('.menu')) {
-        menu.style.display = 'none';
-        ctrls.classList.toggle('hidden');
-    }
-  };
+            if (!batchId || !videoId) {
+                alert("Required parameters missing in URL");
+                return;
+            }
 
-  video.ontimeupdate = () => {
-    const pct = (video.currentTime / video.duration) * 100;
-    document.getElementById('progressPlayed').style.width = pct + '%';
-    document.getElementById('cur').innerText = new Date(video.currentTime * 1000).toISOString().substr(11, 8);
-    document.getElementById('dur').innerText = new Date((video.duration || 0) * 1000).toISOString().substr(11, 8);
-  };
+            shaka.polyfill.installAll();
+            if (!shaka.Player.isBrowserSupported()) return;
 
-  progressBar.onpointermove = (e) => { if(e.buttons === 1) updateSeek(e); };
-  progressBar.onpointerdown = (e) => updateSeek(e);
-  function updateSeek(e) {
-    const rect = progressBar.getBoundingClientRect();
-    video.currentTime = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * video.duration;
-  }
-</script>
-<script src="/PW/player.js"></script>
+            const shakaPlayer = new shaka.Player(video);
+            window.player = shakaPlayer;
+
+            let plyr;
+            let tracks = [];
+
+            try {
+                const proxyUrl = `/api/PW/live?batch_id=${batchId}&subject_id=${subjectId}&video_id=${videoId}&start=${startTimestamp}`;
+                const apiResponse = await fetch(proxyUrl);
+                const streamData = await apiResponse.json();
+
+                const source = streamData.url || streamData.stream_url; 
+
+                if (!source) {
+                    alert("Stream not found or live window has ended.");
+                    return;
+                }
+
+                const manifestUrl = new URL(source);
+                const signedParams = manifestUrl.searchParams;
+
+                shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
+                    const url = new URL(request.uris[0]);
+                    signedParams.forEach((v, k) => {
+                        url.searchParams.set(k, v);
+                    });
+                    request.uris[0] = url.toString();
+                });
+
+                await shakaPlayer.load(source);
+
+                tracks = shakaPlayer.getVariantTracks().filter(t => t.height);
+                const resolutions = [...new Set(tracks.map(t => t.height))].sort((a,b)=>b-a);
+
+                plyr = new Plyr(video, {
+                    autoplay: true,
+                    keyboard: false,
+                    controls: [
+                        'play-large', 'rewind', 'play', 'fast-forward', 'progress', 
+                        'current-time', 'duration', 'mute', 'volume', 'settings', 'pip', 'fullscreen'
+                    ],
+                    settings: ['quality', 'speed'],
+                    quality: {
+                        default: 'Auto',
+                        options: ['Auto', ...resolutions],
+                        forced: true,
+                        onChange: (q) => {
+                            if (q === 'Auto') {
+                                shakaPlayer.configure({ abr: { enabled: true } });
+                                return;
+                            }
+                            const track = tracks.find(t => t.height == q);
+                            if (track) {
+                                shakaPlayer.configure({ abr: { enabled: false } });
+                                shakaPlayer.selectVariantTrack(track, true);
+                            }
+                        }
+                    },
+                    speed: {
+                        selected: 1,
+                        options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3]
+                    }
+                });
+
+                container.addEventListener("dblclick", e => { e.stopPropagation(); e.preventDefault(); }, true);
+                ['touchstart','touchmove','touchend','click'].forEach(ev => {
+                    video.addEventListener(ev, e => e.stopImmediatePropagation(), true);
+                });
+
+                const controls = container.querySelector('.plyr__controls');
+                const timeDisplay = controls?.querySelector('.plyr__time--current');
+                let liveBtn;
+
+                if (controls && timeDisplay) {
+                    liveBtn = document.createElement('button');
+                    liveBtn.className = 'plyr__control live-pill';
+                    liveBtn.type = 'button';
+                    liveBtn.innerHTML = '<span class="live-dot"></span>LIVE';
+
+                    liveBtn.addEventListener('click', () => {
+                        const seekRange = shakaPlayer.seekRange();
+                        plyr.currentTime = seekRange.end;
+                    });
+
+                    timeDisplay.insertAdjacentElement('afterend', liveBtn);
+                }
+
+                const LIVE_THRESHOLD = 30;
+                function updateLiveState() {
+                    if (!liveBtn) return;
+                    const seekRange = shakaPlayer.seekRange();
+                    const distance = seekRange.end - video.currentTime;
+                    const isLive = distance <= LIVE_THRESHOLD;
+
+                    liveBtn.classList.toggle('live-now', isLive);
+                    liveBtn.classList.toggle('live-behind', !isLive);
+                }
+
+                setInterval(updateLiveState, 1000);
+                video.addEventListener('timeupdate', updateLiveState);
+
+            } catch (err) {
+                console.error(err);
+            }
+
+            const lockLandscape = async () => {
+                const o = screen.orientation;
+                if (o?.lock) {
+                    try { await o.lock("landscape"); } catch {}
+                }
+            };
+
+            const unlockOrientation = () => {
+                const o = screen.orientation;
+                if (o?.unlock) o.unlock();
+            };
+
+            document.addEventListener("fullscreenchange", () => {
+                if (document.fullscreenElement) {
+                    lockLandscape();
+                } else {
+                    unlockOrientation();
+                }
+            });
+
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            let holdTimeout = null;
+            let speedHeld = false;
+            let lastTap = 0;
+
+            video.addEventListener("touchstart", () => {
+                if (!isMobile) return;
+                holdTimeout = setTimeout(() => {
+                    if (!speedHeld) {
+                        speedHeld = true;
+                        plyr.speed = 2;
+                    }
+                }, 1000);
+            });
+
+            video.addEventListener("touchend", () => {
+                if (!isMobile) return;
+                clearTimeout(holdTimeout);
+                if (speedHeld) {
+                    plyr.speed = 1;
+                    speedHeld = false;
+                }
+            });
+
+            container.addEventListener("touchend", (e) => {
+                if (!isMobile) return;
+                const now = Date.now();
+                const tapGap = now - lastTap;
+                lastTap = now;
+
+                const { clientX } = e.changedTouches[0];
+                const { left, width } = container.getBoundingClientRect();
+                const tapX = clientX - left;
+
+                if (tapGap < 300) {
+                    if (tapX < width / 3) {
+                        plyr.currentTime = Math.max(0, plyr.currentTime - 10);
+                    } else if (tapX > (2 * width) / 3) {
+                        plyr.currentTime += 10;
+                    } else {
+                        plyr.togglePlay();
+                    }
+                }
+            });
+
+            document.addEventListener("keydown", (e) => {
+                const focused = document.activeElement;
+                if (focused && (focused.classList?.contains('plyr__control') || focused.closest?.('.plyr'))) {
+                    focused.blur();
+                }
+
+                const active = document.activeElement;
+                const tag = active?.tagName?.toLowerCase();
+                if (tag === "input" || tag === "textarea") return;
+
+                switch (e.key.toLowerCase()) {
+                    case " ":
+                    case "k":
+                        e.preventDefault();
+                        if (video.paused) { video.play(); } else { video.pause(); }
+                        break;
+                    case "arrowright":
+                        plyr.currentTime += 10;
+                        break;
+                    case "arrowleft":
+                        plyr.currentTime -= 10;
+                        break;
+                    case "arrowup":
+                        e.preventDefault();
+                        plyr.volume = Math.min(1, plyr.volume + 0.1);
+                        break;
+                    case "arrowdown":
+                        e.preventDefault();
+                        plyr.volume = Math.max(0, plyr.volume - 0.1);
+                        break;
+                    case "m":
+                        plyr.muted = !plyr.muted;
+                        break;
+                    case "f":
+                        plyr.fullscreen.toggle();
+                        break;
+                    case "c":
+                        plyr.speed = plyr.speed === 1 ? 2 : 1;
+                        break;
+                }
+            });
+
+            window.addEventListener("beforeunload", () => {
+                shakaPlayer.destroy();
+            });
+        })();
+    </script>
 </body>
-</html> 
+</html>
