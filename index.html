@@ -295,7 +295,7 @@
 
       showSkeleton();
 
-      fetch("/api/PW/all-batches-api1.js")
+      fetch("/list.js")
         .then((r) => r.json())
         .then((d) => {
           ALL = d.batches || d.data?.batches || d.data || [];
@@ -491,7 +491,7 @@
             if (batch) {
               cachedBatches[id] = batch;
             } else if (!cachedBatches[id]) {
-              fetch("/api/PW/all-batches-api1.js")
+              fetch("/list.js")
                 .then((r) => r.json())
                 .then((d) => {
                   let list = d.batches || d.data?.batches || d.data || [];
@@ -517,7 +517,7 @@
 
         if (e.target.classList.contains("explore-btn")) {
           let id = e.target.dataset.id;
-          window.location.href = "PW/batches.html?batch_id=" + id;
+          window.location.href = "/batches.html?batch_id=" + id;
         }
       });
 
